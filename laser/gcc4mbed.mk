@@ -104,7 +104,8 @@ MRI_INIT_PARAMETERS=$(MRI_UART)
 
 
 # Output Object Directory
-OUTDIR=LPC176x
+OUTDIR=LPC1768
+OUTDIRLPC=LPC1769
 
 # List of sources to be compiled/assembled
 CSRCS = $(wildcard $(SRC)/*.c $(SRC)/*/*.c $(SRC)/*/*/*.c $(SRC)/*/*/*/*.c $(SRC)/*/*/*/*/*.c)
@@ -116,16 +117,19 @@ CPPSRCS = $(wildcard $(SRC)/*.cpp $(SRC)/*/*.cpp $(SRC)/*/*/*.cpp $(SRC)/*/*/*/*
 
 # List of the objects files to be compiled/assembled
 OBJECTS = $(patsubst %.c,$(OUTDIR)/%.o,$(CSRCS)) $(patsubst %.s,$(OUTDIR)/%.o,$(patsubst %.S,$(OUTDIR)/%.o,$(ASRCS))) $(patsubst %.cpp,$(OUTDIR)/%.o,$(CPPSRCS))
+OBJECTSLPC = $(patsubst %.c,$(OUTDIRLPC)/%.o,$(CSRCS)) $(patsubst %.s,$(OUTDIRLPC)/%.o,$(patsubst %.S,$(OUTDIRLPC)/%.o,$(ASRCS))) $(patsubst %.cpp,$(OUTDIRLPC)/%.o,$(CPPSRCS))
 
 # Add in the GCC4MBED stubs which allow hooking in the MRI debug monitor.
 OBJECTS += $(OUTDIR)/gcc4mbed.o
+OBJECTSLPC += $(OUTDIR)/gcc4mbed.o
 
 # List of the header dependency files, one per object file.
 DEPFILES = $(patsubst %.o,%.d,$(OBJECTS))
+DEPFILESLPC = $(patsubst %.o,%.d,$(OBJECTSLPC))
 
 # Linker script to be used.  Indicates what code should be placed where in memory.
 LSCRIPT=$(GCC4MBED_DIR)/build/mbed.ld
-LSCRIPT2=lpcexpresso.ld
+LSCRIPTLPC=lpcexpresso.ld
 
 # Location of external library and header dependencies.
 EXTERNAL_DIR = $(GCC4MBED_DIR)/external
@@ -184,7 +188,7 @@ endif
 
 # Linker Options.
 LDFLAGS = -mcpu=cortex-m3 -mthumb -O$(OPTIMIZATION) -specs=$(GCC4MBED_DIR)/build/startfile.spec -Wl,-Map=$(OUTDIR)/$(PROJECT).map,--cref,--gc-sections,--wrap=_isatty$(MRI_WRAPS) -T$(LSCRIPT)  -L $(EXTERNAL_DIR)/gcc/LPC1768
-LDFLAGS-LPC = -mcpu=cortex-m3 -mthumb -O$(OPTIMIZATION) -specs=$(GCC4MBED_DIR)/build/startfile.spec -Wl,-Map=$(OUTDIR)/$(PROJECT).map,--cref,--gc-sections,--wrap=_isatty$(MRI_WRAPS) -T$(LSCRIPT2)  -L $(EXTERNAL_DIR)/gcc/LPC1768
+LDFLAGSLPC = -mcpu=cortex-m3 -mthumb -O$(OPTIMIZATION) -specs=$(GCC4MBED_DIR)/build/startfile.spec -Wl,-Map=$(OUTDIR)/$(PROJECT).map,--cref,--gc-sections,--wrap=_isatty$(MRI_WRAPS) -T$(LSCRIPTLPC)  -L $(EXTERNAL_DIR)/gcc/LPC1768
 
 #  Compiler/Assembler/Linker Paths
 GCC = arm-none-eabi-gcc
@@ -223,7 +227,7 @@ endif
 #########################################################################
 .PHONY: all clean deploy
 
-all:: $(PROJECT).hex $(PROJECT).bin $(PROJECT)-lpc.bin $(OUTDIR)/$(PROJECT).disasm
+all:: $(PROJECT).hex $(PROJECT)-lpc.hex $(PROJECT).bin $(PROJECT)-lpc.bin $(OUTDIR)/$(PROJECT).disasm $(OUTDIRLPC)/$(PROJECT).disasm
 
 $(PROJECT).bin: $(PROJECT).elf
 	$(OBJCOPY) -O binary $(PROJECT).elf $(PROJECT).bin
@@ -234,27 +238,38 @@ $(PROJECT)-lpc.bin: $(PROJECT)-lpc.elf
 $(PROJECT).hex: $(PROJECT).elf
 	$(OBJCOPY) -R .stack -O ihex $(PROJECT).elf $(PROJECT).hex
 	
+$(PROJECT)-lpc.hex: $(PROJECT)-lpc.elf
+	$(OBJCOPY) -R .stack -O ihex $(PROJECT)-lpc.elf $(PROJECT)-lpc.hex
+
 $(OUTDIR)/$(PROJECT).disasm: $(PROJECT).elf
 	$(OBJDUMP) -d -f -M reg-names-std $(PROJECT).elf >$(OUTDIR)/$(PROJECT).disasm
-	
+
+$(OUTDIRLPC)/$(PROJECT).disasm: $(PROJECT)-lpc.elf
+	$(OBJDUMP) -d -f -M reg-names-std $(PROJECT)-lpc.elf >$(OUTDIRLPC)/$(PROJECT).disasm
+		
 $(PROJECT).elf: $(LSCRIPT) $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(PROJECT).elf
 	$(SIZE) $(PROJECT).elf
 
-$(PROJECT)-lpc.elf: $(LSCRIPT) $(OBJECTS)
-	$(LD) $(LDFLAGS-LPC) $(OBJECTS) $(LIBS) -o $(PROJECT)-lpc.elf
+$(PROJECT)-lpc.elf: $(LSCRIPT) $(OBJECTSLPC)
+	$(LD) $(LDFLAGSLPC) $(OBJECTSLPC) $(LIBS) -o $(PROJECT)-lpc.elf
 	$(SIZE) $(PROJECT)-lpc.elf
 
 clean:
 	$(REMOVE) -f $(call convert-slash,$(OBJECTS)) $(QUIET)
 	$(REMOVE) -f $(call convert-slash,$(DEPFILES)) $(QUIET)
 	$(REMOVE_DIR) $(OUTDIR) $(QUIET)
+	$(REMOVE_DIR) $(OUTDIRLPC) $(QUIET)
 	$(REMOVE) -f $(call convert-slash,$(OUTDIR)/$(PROJECT).map) $(QUIET)
+	$(REMOVE) -f $(call convert-slash,$(OUTDIRLPC)/$(PROJECT).map) $(QUIET)
 	$(REMOVE) -f $(call convert-slash,$(OUTDIR)/$(PROJECT).disasm) $(QUIET)
+	$(REMOVE) -f $(call convert-slash,$(OUTDIRLPC)/$(PROJECT).disasm) $(QUIET)
 	$(REMOVE) -f $(PROJECT)-lpc.bin $(QUIET)
 	$(REMOVE) -f $(PROJECT).bin $(QUIET)
 	$(REMOVE) -f $(PROJECT).hex $(QUIET)
+	$(REMOVE) -f $(PROJECT)-lpc.hex $(QUIET)
 	$(REMOVE) -f $(PROJECT).elf $(QUIET)
+	$(REMOVE) -f $(PROJECT)-lpc.elf $(QUIET)
 
 -include $(DEPFILES)
 
@@ -287,5 +302,25 @@ $(OUTDIR)/%.o : %.S
 $(OUTDIR)/%.o : %.s
 	$(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
 	$(AS) $(AS_FLAGS) -o $@ $<
+
+$(OUTDIRLPC)/gcc4mbed.o : $(GCC4MBED_DIR)/src/gcc4mbed.c
+	$(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(GPP) $(GPFLAGS) -DXPRESSO -c $< -o $@
+
+$(OUTDIRLPC)/%.o : %.cpp
+	$(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(GPP) $(GPFLAGS) -DXPRESSO -c $< -o $@
+
+$(OUTDIRLPC)/%.o : %.c
+	$(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(GCC) $(GCFLAGS) -DXPRESSO -c $< -o $@
+
+$(OUTDIRLPC)/%.o : %.S
+	$(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(GCC) $(AS_GCFLAGS) -DXPRESSO -c $< -o $@
+
+$(OUTDIRLPC)/%.o : %.s
+	$(MKDIR) $(call convert-slash,$(dir $@)) $(QUIET)
+	$(AS) $(AS_FLAGS) -DXPRESSO -o $@ $<
 
 #########################################################################
