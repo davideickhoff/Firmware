@@ -299,7 +299,9 @@ void cleandir() {
         while((p = readdir(d)) != NULL) {
             char fullname[MAXFILESIZE+SHORTFILESIZE+2];
             sprintf(fullname, "/sd/%s", p->d_name);
-            remove(fullname);
+            if (strcmp(fullname, "/sd/config.txt") + strcmp(fullname, "/sd/firmware.bin") == 0) { 
+                remove(fullname);
+            }
         }
     } else {
         error("Could not open directory!\n\r");
@@ -522,6 +524,7 @@ int isFirmware(char *filename) {
 } 
 
 void installFirmware(char *filename) {
+#ifndef XPRESSO
     removeFirmware();
     char buff[512];
     extern LaosFileSystem sd;
@@ -537,9 +540,11 @@ void installFirmware(char *filename) {
         fclose(fp2);
     }
     removefile(filename);
+#endif
 }
 
 void removeFirmware() { // remove old firmware from SD
+#ifndef XPRESSO
     DIR *d;
     struct dirent *p;
     d = opendir("/local");
@@ -554,6 +559,7 @@ void removeFirmware() { // remove old firmware from SD
     } else {
         printf("removeFirmware: Could not open directory!\n\r");
     }
+#endif
 }
 
 int SDcheckFirmware() {

@@ -29,6 +29,7 @@ ConfigFile::ConfigFile(char *file)
   extern LaosFileSystem sd;
   printf("ConfigFile(%s)\n\r", file);
   fp =sd.openfile(file, "r");
+#ifndef XPRESSO
   if (fp==NULL) {
     printf("Local configfile\n\r");
     char tmpname[32];
@@ -36,6 +37,7 @@ ConfigFile::ConfigFile(char *file)
     printf("name: %s\n\r", tmpname); 
     fp = fopen(tmpname,"r");
   }
+#endif
 }
 
 // Destroy a config file (closes the file handle)

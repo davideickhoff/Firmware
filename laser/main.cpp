@@ -61,7 +61,9 @@ DigitalOut eth_speed(p30); // yellow
 EthernetNetIf *eth; // Ethernet, tcp/ip
 
 // Filesystems
+#ifndef XPRESSO
 LocalFileSystem local("local");   //File System
+#endif
 LaosFileSystem sd(p11, p12, p13, p14, "sd");
 
 // Laos objects
