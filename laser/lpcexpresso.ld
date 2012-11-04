@@ -1,8 +1,8 @@
 /* Linker script for mbed LPC1768 */
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 64K, LENGTH = (512K - 64K) 
   #FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 512K
+  FLASH (rx) : ORIGIN = 0x00010000, LENGTH = 448K
   RAM (rwx) : ORIGIN = 0x100000C8, LENGTH = (32K - 0xC8)
 
   USB_RAM(rwx) : ORIGIN = 0x2007C000, LENGTH = 16K

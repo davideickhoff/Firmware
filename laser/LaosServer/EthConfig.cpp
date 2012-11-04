@@ -56,6 +56,7 @@ bool EthLink(void)
 **/
 EthernetNetIf * EthConfig()
  {
+    printf ("Starting EthConfig()\n");
     EthernetNetIf *eth;
     if ( cfg->dhcp )
     {

@@ -28,7 +28,7 @@
 // Serial
 #if !MRI_ENABLE
 Serial serial(USBTX, USBRX);
-#define _SERIAL_BAUD 115200
+#define _SERIAL_BAUD 57600
 #endif
 
 // I2C
