@@ -121,7 +121,7 @@ OBJECTSLPC = $(patsubst %.c,$(OUTDIRLPC)/%.o,$(CSRCS)) $(patsubst %.s,$(OUTDIRLP
 
 # Add in the GCC4MBED stubs which allow hooking in the MRI debug monitor.
 OBJECTS += $(OUTDIR)/gcc4mbed.o
-OBJECTSLPC += $(OUTDIR)/gcc4mbed.o
+OBJECTSLPC += $(OUTDIRLPC)/gcc4mbed.o
 
 # List of the header dependency files, one per object file.
 DEPFILES = $(patsubst %.o,%.d,$(OBJECTS))
@@ -188,7 +188,7 @@ endif
 
 # Linker Options.
 LDFLAGS = -mcpu=cortex-m3 -mthumb -O$(OPTIMIZATION) -specs=$(GCC4MBED_DIR)/build/startfile.spec -Wl,-Map=$(OUTDIR)/$(PROJECT).map,--cref,--gc-sections,--wrap=_isatty$(MRI_WRAPS) -T$(LSCRIPT)  -L $(EXTERNAL_DIR)/gcc/LPC1768
-LDFLAGSLPC = -mcpu=cortex-m3 -mthumb -O$(OPTIMIZATION) -specs=$(GCC4MBED_DIR)/build/startfile.spec -Wl,-Map=$(OUTDIR)/$(PROJECT).map,--cref,--gc-sections,--wrap=_isatty$(MRI_WRAPS) -T$(LSCRIPTLPC)  -L $(EXTERNAL_DIR)/gcc/LPC1768
+LDFLAGSLPC = -mcpu=cortex-m3 -mthumb -O$(OPTIMIZATION) -specs=$(GCC4MBED_DIR)/build/startfile.spec -Wl,-Map=$(OUTDIRLPC)/$(PROJECT).map,--cref,--gc-sections,--wrap=_isatty$(MRI_WRAPS) -T$(LSCRIPTLPC)  -L $(EXTERNAL_DIR)/gcc/LPC1768
 
 #  Compiler/Assembler/Linker Paths
 GCC = arm-none-eabi-gcc
@@ -251,7 +251,7 @@ $(PROJECT).elf: $(LSCRIPT) $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $(PROJECT).elf
 	$(SIZE) $(PROJECT).elf
 
-$(PROJECT)-lpc.elf: $(LSCRIPT) $(OBJECTSLPC)
+$(PROJECT)-lpc.elf: $(LSCRIPTLPC) $(OBJECTSLPC)
 	$(LD) $(LDFLAGSLPC) $(OBJECTSLPC) $(LIBS) -o $(PROJECT)-lpc.elf
 	$(SIZE) $(PROJECT)-lpc.elf
 
