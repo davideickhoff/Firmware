@@ -48,6 +48,7 @@
 #include "global.h"
 #include "ConfigFile.h"
 #include "EthConfig.h"
+#include "TCPServer.h"
 #include "TFTPServer.h"
 #include "LaosMenu.h"
 #include "LaosMotion.h"
@@ -73,6 +74,7 @@ LaosFileSystem sd(p11, p12, p13, p14, "sd");
 LaosDisplay *dsp;
 LaosMenu *mnu;
 TFTPServer *srv;
+TCPServer *tcp_srv;
 LaosMotion *mot;
 Timer systime;
 
@@ -182,36 +184,43 @@ int main()
 
 void main_nodisplay() {
   float x, y, z = 0;
+  mnu->SetScreen("TCP API running");
+  led1=led2=led3=led4=0;
   
   // main loop  
-   while(1) 
+  while(1) 
   {  
-    led1=led2=led3=led4=0;
-    mnu->SetScreen("Wait for file ...");
-    while (srv->State() == listen)
-        Net::poll();
-    GetFile();
-    mot->reset();
-    plan_get_current_position_xyz(&x, &y, &z);
-     printf("%f %f\n", x,y); 
-    mnu->SetScreen("Laser BUSY..."); 
-    
-    char name[32];
-    srv->getFilename(name);
-    printf("Now processing file: '%s'\n\r", name);
-    FILE *in = sd.openfile(name, "r");
-    while (!feof(in))
-    { 
-      while (!mot->ready() );
-      mot->write(readint(in));
-    }
-    fclose(in);
-    removefile(name);
-    // done
-    printf("DONE!...\n");
-	while (!mot->ready() );
-    mot->moveTo(cfg->xrest, cfg->yrest, cfg->zrest);
+      Net::poll();
   }
+
+ //   while(1) 
+ //  {  
+ //    led1=led2=led3=led4=0;
+ //    mnu->SetScreen("Wait for file ...");
+ //    while (srv->State() == listen)
+ //        Net::poll();
+ //    GetFile();
+ //    mot->reset();
+ //    plan_get_current_position_xyz(&x, &y, &z);
+ //     printf("%f %f\n", x,y); 
+ //    mnu->SetScreen("Laser BUSY..."); 
+    
+ //    char name[32];
+ //    srv->getFilename(name);
+ //    printf("Now processing file: '%s'\n\r", name);
+ //    FILE *in = sd.openfile(name, "r");
+ //    while (!feof(in))
+ //    { 
+ //      while (!mot->ready() );
+ //      mot->write(readint(in));
+ //    }
+ //    fclose(in);
+ //    removefile(name);
+ //    // done
+ //    printf("DONE!...\n");
+	// while (!mot->ready() );
+ //    mot->moveTo(cfg->xrest, cfg->yrest, cfg->zrest);
+ //  }
 }
 
 
