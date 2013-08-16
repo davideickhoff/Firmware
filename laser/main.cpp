@@ -140,6 +140,9 @@ int main()
       
   printf("SERVER...\n");
   srv = new TFTPServer("/sd", cfg->port);
+
+  tcp_srv = new TCPServer();
+  
   mnu->SetScreen("SERVER OK...."); 
   wait(0.5);
   mnu->SetScreen(9); // IP

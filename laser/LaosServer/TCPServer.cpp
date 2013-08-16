@@ -2,6 +2,7 @@
 #include "TCPServer.h"
 #include <string>
 #include <sstream>
+#include "planner.h"
 
 extern void plan_get_current_position_xyz(float *x, float *y, float *z);
 
@@ -184,22 +185,36 @@ void TCPServer::onConnectedTCPSocketEvent(TCPSocketEvent e) {
 
            } else {
 
-               string arr[4];
                 int i = 0;
                 stringstream ssin(command);
+
+                mot->reset();
+
+
                 while (ssin.good() && i < 4){
-                    ssin >> arr[i];
+                    string item;
+                    ssin >> item;
+
+                    while (!mot->ready() );
+                    mot->write(atoi(item.c_str()));
+
+
                     ++i;
                 }
 
-                x = atoi(arr[1].c_str());
+                while (!mot->ready() );
 
-                y = atoi(arr[2].c_str());
+                while (!plan_queue_empty()); // wait until done, so no queue is used at all
 
-                printf("move to %i %i \n", x,y);
+                string msg = string("DONE ") + command;
 
-                mot->reset();
-                mot->moveTo(x, y, z);  // set position in microns          
+                pConnectedSock->send(msg.c_str(), msg.size());
+
+                // x = atoi(arr[1].c_str());
+                // y = atoi(arr[2].c_str());
+                // printf("move to %i %i \n", x,y);
+                // mot->moveTo(x, y, z);  // set position in microns          
+
         
            }
          }
