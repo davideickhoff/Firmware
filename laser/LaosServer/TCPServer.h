@@ -3,6 +3,7 @@
 #ifndef _TCPSERVER_H_
 #define _TCPSERVER_H_
 
+#include "global.h"
 #include <stdio.h>
 #include <ctype.h>
 #include "mbed.h"

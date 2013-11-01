@@ -226,9 +226,9 @@ void LaosMotion::write(int i)
   //printf("Empty\n");
   
   
-  #ifdef READ_FILE_DEBUG_VERBOSE
+  //#ifdef READ_FILE_DEBUG_VERBOSE
   	printf(">%i (command: %i, step: %i)\n",i,command,step);
-  #endif	
+  //#endif	
   
   if ( step == 0 )
   {

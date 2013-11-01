@@ -157,8 +157,8 @@ void TCPServer::onConnectedTCPSocketEvent(TCPSocketEvent e) {
           int x, y, z = 0;
 
        // Read in any available data into the buffer
-       char buff[128];
-       while ( int len = pConnectedSock->recv(buff, 128) ) {
+       char buff[1024];
+       while ( int len = pConnectedSock->recv(buff, 1024) ) {
            const char *ptr = strchr(buff, ';');
             if(ptr) {
                int index = ptr - buff;
@@ -181,7 +181,15 @@ void TCPServer::onConnectedTCPSocketEvent(TCPSocketEvent e) {
 
                 pConnectedSock->send(msg.c_str(), msg.size());
 
+           } else if (strcmp (buff,"home") == 0) {
+               // send position
+                mot->home(cfg->xhome,cfg->yhome, cfg->zhome);
 
+                while (!mot->ready() );
+                while (!plan_queue_empty()); // wait until done, so no queue is used at all
+                string msg = string("DONE home");
+                pConnectedSock->send(msg.c_str(), msg.size());
+                pConnectedSock->send(msg.c_str(), msg.size());
 
            } else {
 
@@ -189,27 +197,41 @@ void TCPServer::onConnectedTCPSocketEvent(TCPSocketEvent e) {
                 stringstream ssin(command);
 
                 mot->reset();
-
+                bool waitUntilDone = false;
 
                 while (ssin.good() && i < 4){
                     string item;
                     ssin >> item;
 
-                    while (!mot->ready() );
-                    mot->write(atoi(item.c_str()));
+                    if (i==0)
+                    {
+                        waitUntilDone = (item=="S");
+                    } else {
+                        while (!mot->ready() );
+                        mot->write(atoi(item.c_str()));
+
+                    }
+
 
 
                     ++i;
                 }
 
+                printf("wait for mot"); 
+
                 while (!mot->ready() );
+                printf("mot ready"); 
 
-                while (!plan_queue_empty()); // wait until done, so no queue is used at all
+                if (waitUntilDone)
+                {
+                    printf("wait for empty queue"); 
 
-                string msg = string("DONE ") + command;
+                    while (!plan_queue_empty()); // wait until done, so no queue is used at all
+                    string msg = string("DONE ") + command;
+                    pConnectedSock->send(msg.c_str(), msg.size());
+                }
 
-                pConnectedSock->send(msg.c_str(), msg.size());
-
+    
                 // x = atoi(arr[1].c_str());
                 // y = atoi(arr[2].c_str());
                 // printf("move to %i %i \n", x,y);
